@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>계단 계산기</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="workspace">
+        <aside class="panel controls" aria-label="계단 입력값">
+          <div class="brand">
+            <div>
+              <p class="eyebrow">Stair Planner</p>
+              <h1>계단 계산기</h1>
+            </div>
+            <span class="status" id="fitStatus">계산 준비</span>
+          </div>
+
+          <fieldset>
+            <legend>방식</legend>
+            <div class="mode-grid" role="radiogroup" aria-label="계단 방식">
+              <label>
+                <input type="radio" name="mode" value="turn" checked />
+                <span>계단참 후 꺾임</span>
+              </label>
+              <label>
+                <input type="radio" name="mode" value="straight" />
+                <span>일자형</span>
+              </label>
+              <label>
+                <input type="radio" name="mode" value="straightLanding" />
+                <span>초반 계단참 90도형</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>개구부와 높이</legend>
+            <div class="input-grid">
+              <label>
+                <span>개구부 가로</span>
+                <input id="openingWidth" type="number" min="300" step="10" value="1800" />
+                <em>mm</em>
+              </label>
+              <label>
+                <span>개구부 세로</span>
+                <input id="openingLength" type="number" min="300" step="10" value="2200" />
+                <em>mm</em>
+              </label>
+              <label>
+                <span>층고</span>
+                <input id="floorHeight" type="number" min="300" step="10" value="2700" />
+                <em>mm</em>
+              </label>
+              <label>
+                <span>계단 유효폭</span>
+                <input id="stairWidth" type="number" min="500" step="10" value="800" />
+                <em>mm</em>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>마감 보정</legend>
+            <div class="input-grid">
+              <label>
+                <span>벽/측면 마감</span>
+                <input id="sideFinish" type="number" min="0" step="1" value="20" />
+                <em>mm/면</em>
+              </label>
+              <label>
+                <span>바닥 마감</span>
+                <input id="bottomFinish" type="number" min="0" step="1" value="0" />
+                <em>mm</em>
+              </label>
+              <label>
+                <span>상부 마감</span>
+                <input id="topFinish" type="number" min="0" step="1" value="0" />
+                <em>mm</em>
+              </label>
+              <label>
+                <span>디딤판 마감</span>
+                <input id="treadFinish" type="number" min="0" step="1" value="0" />
+                <em>mm</em>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>권장 범위</legend>
+            <div class="input-grid">
+              <label>
+                <span>챌판 최소</span>
+                <input id="riserMin" type="number" min="80" step="1" value="150" />
+                <em>mm</em>
+              </label>
+              <label>
+                <span>챌판 최대</span>
+                <input id="riserMax" type="number" min="80" step="1" value="180" />
+                <em>mm</em>
+              </label>
+              <label>
+                <span>디딤판 최소</span>
+                <input id="treadMin" type="number" min="120" step="1" value="260" />
+                <em>mm</em>
+              </label>
+              <label>
+                <span>디딤판 최대</span>
+                <input id="treadMax" type="number" min="120" step="1" value="300" />
+                <em>mm</em>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>기준 외 검토</legend>
+            <div class="input-grid">
+              <label class="check-row">
+                <input id="allowExtraSteps" type="checkbox" />
+                <span>기준 외 단수 허용</span>
+              </label>
+              <label>
+                <span>추가 검토 단수</span>
+                <input id="extraRisers" type="number" min="0" max="8" step="1" value="3" />
+                <em>단</em>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset id="turnSettings">
+            <legend>180도 회전 설정</legend>
+            <div class="input-grid">
+              <label>
+                <span>회전 방식</span>
+                <input id="turnType" type="text" value="180도 U형 고정" disabled />
+              </label>
+              <label>
+                <span>계단참 위치</span>
+                <select id="landingWall">
+                  <option value="bottom" selected>아래쪽 벽 중앙</option>
+                  <option value="top">위쪽 벽 중앙</option>
+                </select>
+              </label>
+              <label>
+                <span>회전부 크기</span>
+                <input id="landingDepth" type="number" min="600" step="10" value="900" />
+                <em>mm</em>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset id="straightLandingSettings" hidden>
+            <legend>초반 계단참 90도 설정</legend>
+            <div class="input-grid">
+              <label>
+                <span>계단참 전 단수</span>
+                <input id="earlySteps" type="number" min="1" max="12" step="1" value="3" />
+                <em>단</em>
+              </label>
+              <label>
+                <span>꺾임 방향</span>
+                <select id="landingTurn">
+                  <option value="right" selected>오른쪽 90도</option>
+                  <option value="left">왼쪽 90도</option>
+                </select>
+              </label>
+              <label>
+                <span>계단참 깊이</span>
+                <input id="inlineLandingDepth" type="number" min="600" step="10" value="900" />
+                <em>mm</em>
+              </label>
+            </div>
+          </fieldset>
+        </aside>
+
+        <section class="output">
+          <div class="summary-grid" aria-live="polite">
+            <article>
+              <span>추천 단수</span>
+              <strong id="riserCount">-</strong>
+            </article>
+            <article>
+              <span>챌판 높이</span>
+              <strong id="riserHeight">-</strong>
+            </article>
+            <article>
+              <span>디딤판 너비</span>
+              <strong id="treadDepth">-</strong>
+            </article>
+            <article>
+              <span>필요 평면 길이</span>
+              <strong id="requiredRun">-</strong>
+            </article>
+          </div>
+
+          <section class="panel plan-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Plan Preview</p>
+                <h2>평면 검토</h2>
+              </div>
+              <span id="usableSize">-</span>
+            </div>
+            <svg id="planSvg" viewBox="0 0 720 520" role="img" aria-label="계단 평면 미리보기"></svg>
+          </section>
+
+          <section class="details">
+            <article class="panel">
+              <h2>계산 결과</h2>
+              <dl id="resultList"></dl>
+            </article>
+            <article class="panel">
+              <h2>검토 메모</h2>
+              <ul id="warnings"></ul>
+            </article>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
