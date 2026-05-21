@@ -18,6 +18,7 @@ const fields = [
   "turnType",
   "landingWall",
   "landingDepth",
+  "turnStepCount",
   "earlySteps",
   "landingTurn",
   "inlineLandingDepth",
@@ -59,6 +60,7 @@ function getInputs() {
     turnType: "180",
     landingWall: $("landingWall").value,
     landingDepth: num("landingDepth"),
+    turnStepCount: $("turnStepCount").value,
     earlySteps: num("earlySteps"),
     landingTurn: $("landingTurn").value,
     inlineLandingDepth: num("inlineLandingDepth"),
@@ -86,7 +88,13 @@ function scoreCandidate(candidate, input) {
 function turnLayout(input, treadCount, tread, riser) {
   const flightRunLimit = Math.max(0, input.usableLength - input.landingDepth);
   const flightCapacity = Math.max(0, Math.floor(flightRunLimit / Math.max(tread, 1)));
-  const firstFlight = Math.min(Math.floor(treadCount / 2), flightCapacity);
+  const requestedTurnSteps = input.turnStepCount === "auto" ? null : Number(input.turnStepCount);
+  const autoTurnSteps = Math.max(0, treadCount - Math.min(Math.floor(treadCount / 2), flightCapacity) * 2);
+  const targetTurnSteps = requestedTurnSteps ?? Math.min(4, autoTurnSteps);
+  const parityOk = (treadCount - targetTurnSteps) % 2 === 0;
+  const requestedFits = targetTurnSteps >= 0 && targetTurnSteps <= 4 && targetTurnSteps <= treadCount;
+  const equalFlightCount = parityOk && requestedFits ? (treadCount - targetTurnSteps) / 2 : Math.floor((treadCount - targetTurnSteps) / 2);
+  const firstFlight = Math.min(Math.max(0, equalFlightCount), flightCapacity);
   const secondFlight = firstFlight;
   const turnSteps = Math.max(0, treadCount - firstFlight - secondFlight);
   const requiredRun = Math.max(firstFlight * tread, secondFlight * tread) + input.landingDepth;
@@ -103,7 +111,8 @@ function turnLayout(input, treadCount, tread, riser) {
     requiredRun,
     secondaryRun: input.stairWidth * 2,
     availableSecondary: input.usableWidth,
-    turnValid: turnSteps <= 4 && firstFlight === secondFlight && heightOffset <= riser,
+    requestedTurnSteps,
+    turnValid: turnSteps <= 4 && firstFlight === secondFlight && heightOffset <= riser && (requestedTurnSteps === null || turnSteps === requestedTurnSteps),
   };
 }
 
@@ -235,7 +244,7 @@ function renderDetails(input, best, candidates) {
     ["선택 방식", labels[input.mode]],
     ["계단 구성", split],
     ["챌판 수 / 디딤판 수", `${best.riserCount}단 / ${best.treadCount}칸`],
-    ...(input.mode === "turn" ? [["회전부 계단 수", `${best.layout.turnSteps}칸 / 최대 4칸`]] : []),
+    ...(input.mode === "turn" ? [["회전부 계단 수", `${best.layout.turnSteps}칸 / 최대 4칸${best.layout.requestedTurnSteps === null ? " / 자동" : ""}`]] : []),
     ...(input.mode === "turn" ? [["계단참 위치", input.landingWall === "top" ? "위쪽 벽 중앙" : "아래쪽 벽 중앙"]] : []),
     ...(input.mode === "turn" ? [["회전부 분할", "계단 2열과 계단참이 만나는 꼭지점 기준"]] : []),
     ...(input.mode === "turn" ? [["회전부 중심 높이", `${mm(best.layout.turnCenterHeight, 1)} / 중간 ${mm(best.layout.targetHeight, 1)}`]] : []),
@@ -267,6 +276,9 @@ function renderWarnings(input, best, fits) {
   }
   if (best.layout?.turnSteps > 4) {
     notes.push(`회전부에 ${best.layout.turnSteps}칸이 필요해서 현재 조건의 최대 4칸을 넘습니다.`);
+  }
+  if (input.mode === "turn" && best.layout?.requestedTurnSteps !== null && best.layout?.turnSteps !== best.layout?.requestedTurnSteps) {
+    notes.push(`지정한 회전부 ${best.layout.requestedTurnSteps}칸과 위/아래 동일 계단 수 조건을 동시에 만족하는 후보가 부족합니다.`);
   }
   if (input.mode === "turn" && best.layout?.firstFlight !== best.layout?.secondFlight) {
     notes.push("계단참 후 꺾임 방식은 아래쪽과 위쪽 직선 구간의 계단 수가 같아야 합니다.");
